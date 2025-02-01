@@ -8,6 +8,8 @@ I run this as a flow in a [Windmill](https://github.com/windmill-labs/windmill/t
 
 The catalog_monitor.sql contains the DB schema the python scripts expect to find in the PostgreSQL DB.
 
+Run the python scripts in the following order: 1. catalog_scrape.py 2. catalog_compare.py 3. catalog_url_compare.py 4. clean_up.py
+
 ## How It Works
 The tool utilizes 6 tables to store the scraped metadata records before comparison (master_temp), the most recent version of the metadata records (master), and the previous versions of the metadata records (master_history). The digital object URLs are stored in seperate look up tables (object_url, object_url_history, object_url_temp) because one catalog record could have many digital objects. 
 
