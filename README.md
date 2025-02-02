@@ -4,14 +4,14 @@ A python tool to scrape and monitor the metadata in the [U.S. National Archives 
 If you're more interested in bulk data you can get snapshot directly from the [AWS Registry of Open Data](https://registry.opendata.aws/nara-national-archives-catalog) and read more about the snapshot [here](https://www.archives.gov/developer/national-archives-catalog-dataset). You can also directly get the digital objects from the [public S3 bucket](https://us-east-1.console.aws.amazon.com/s3/buckets/NARAprodstorage?region=us-east-1&bucketType=general&prefix=lz%2F&showversions=true).
 
 ## Usage
-I run this as a flow in a [Windmill](https://github.com/windmill-labs/windmill/tree/main) docker container along with a seperate docker container for PostgreSQL 17. Windmill allows you to schedule the python scripts to run in order and stops if there's an error and can send error messages to your chosen notification tool. But you could run the python scripts manually without Windmill.
+I run this as a flow in a [Windmill](https://github.com/windmill-labs/windmill/tree/main) docker container along with a separate docker container for PostgreSQL 17. Windmill allows you to schedule the python scripts to run in order and stops if there's an error and can send error messages to your chosen notification tool. But you could run the python scripts manually without Windmill.
 
 The catalog_monitor.sql contains the DB schema the python scripts expect to find in the PostgreSQL DB.
 
 Run the python scripts in the following order: 1. catalog_scrape.py 2. catalog_compare.py 3. catalog_url_compare.py 4. clean_up.py
 
 ## How It Works
-The tool utilizes 6 tables to store the scraped metadata records before comparison (master_temp), the most recent version of the metadata records (master), and the previous versions of the metadata records (master_history). The digital object URLs are stored in seperate look up tables (object_url, object_url_history, object_url_temp) because one catalog record could have many digital objects. 
+The tool utilizes 6 tables to store the scraped metadata records before comparison (master_temp), the most recent version of the metadata records (master), and the previous versions of the metadata records (master_history). The digital object URLs are stored in separate look up tables (object_url, object_url_history, object_url_temp) because one catalog record could have many digital objects. 
 
 The catalog_scrape.py script scrapes and parses the most common metadata fields and writes the results to the master_temp and object_url_temp tables with a timestamp from when the records were scraped. It is currently configured to scrape and monitor only catalog records within Record Group (RG) 612, the Civil Rights Cold Case Records Collection, but you can modify the API query to return anything. Review the [API documentation](https://catalog.archives.gov/api/v2/api-docs/) for the metadata schema.
 
