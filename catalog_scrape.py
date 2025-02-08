@@ -34,7 +34,7 @@ def main():
     response = requests.get(url, headers=headers)
     data = response.json()
 
-    # Save the returned JSON (comment out lines 37-49 to skip this)
+    # Save the returned JSON (comment out lines 38-50 to skip this)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     save_dir = "/tmp/windmill/data/path/"
     os.makedirs(save_dir, exist_ok=True)
