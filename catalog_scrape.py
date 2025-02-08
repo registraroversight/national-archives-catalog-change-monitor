@@ -3,6 +3,9 @@ import psycopg2
 from datetime import datetime
 import wmill
 import tempfile
+import json
+import os
+import zipfile
 
 # Fetch PostgreSQL credentials from Windmill resource, change this if running outside of Windmill
 postgres_creds = wmill.get_resource("u/user/db_postgresql")
@@ -23,12 +26,28 @@ connection_str = (
 def main():
     url = "https://catalog.archives.gov/api/v2/records/search?recordGroupNumber=612&limit=1000" # RG 612 specific query
     headers = {
+        'Content-Type': 'application/json',
         'x-api-key': 'api_key' # request api key
     }
 
     # Make the API request
     response = requests.get(url, headers=headers)
     data = response.json()
+
+    # Save the returned JSON (comment out lines 37-49 to skip this)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    save_dir = "/tmp/windmill/data/path/"
+    os.makedirs(save_dir, exist_ok=True)
+    json_file_path = os.path.join(save_dir, f"catalog_response_{timestamp}.json")
+    zip_file_path = os.path.join(save_dir, f"catalog_response_{timestamp}.zip")
+    
+    with open(json_file_path, "w") as json_file:
+        json.dump(data, json_file, indent=4)
+    
+    with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        zipf.write(json_file_path, os.path.basename(json_file_path))
+    
+    os.remove(json_file_path)  # Remove the unzipped JSON file after zipping
 
     # Connect to PostgreSQL database
     conn = psycopg2.connect(connection_str)
