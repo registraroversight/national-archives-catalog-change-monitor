@@ -23,7 +23,7 @@ The clean_up.py script deletes the contents of the master_temp table after compa
 
 ### To Do
 - Add a script to push the tables from PostgreSQL to Google Sheets
-- Add a flag field to the history tables to indicate if a row has been removed entirely from the master tables
+- ~~Add a flag field to the history tables to indicate if a row has been removed entirely from the master tables~~ Completed
 
 ### FYI
 These scripts were written partially with generative AI and I'm not a python, SQL, or Windmill expert so I probably can't help you troubleshoot. 
