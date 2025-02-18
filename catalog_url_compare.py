@@ -66,26 +66,21 @@ def main():
 
         # Step 1: Move deleted rows to history
         insert_deleted_rows_query = sql.SQL("""
-            INSERT INTO object_url_history ({history_columns})
-            SELECT {master_columns}, %s AS h_history_timestamp
-            FROM object_url
-            WHERE NOT EXISTS (
-                SELECT 1 FROM object_url_temp t WHERE t.temp_digital_object_id = object_url.digital_object_id
+            WITH moved_rows AS (
+                DELETE FROM object_url
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM object_url_temp t WHERE t.temp_digital_object_id = object_url.digital_object_id
+                )
+                RETURNING *, %s AS h_history_timestamp, TRUE AS h_deleted_from_object_url
             )
+            INSERT INTO object_url_history ({history_columns})
+            SELECT {master_columns}, h_history_timestamp, h_deleted_from_object_url
+            FROM moved_rows
         """).format(
-            history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp"]),
+            history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp", "deleted_from_object_url"]),
             master_columns=sql.SQL(", ").join(sql.Identifier(col) for col in all_columns),
         )
         execute_query(conn, insert_deleted_rows_query, (current_timestamp,))
-
-        # Step 2: Delete old rows from object_url
-        delete_old_rows_query = """
-            DELETE FROM object_url
-            WHERE NOT EXISTS (
-                SELECT 1 FROM object_url_temp t WHERE t.temp_digital_object_id = object_url.digital_object_id
-            )
-        """
-        execute_query(conn, delete_old_rows_query)
 
         # Compare rows in both tables
         common_rows_query = sql.SQL("""
@@ -114,10 +109,10 @@ def main():
                 # Insert old row into object_url_history before updating
                 insert_history_query = sql.SQL("""
                     INSERT INTO object_url_history ({history_columns})
-                    SELECT {master_columns}, %s AS h_history_timestamp
+                    SELECT {master_columns}, %s AS h_history_timestamp, FALSE AS h_deleted_from_object_url
                     FROM object_url WHERE digital_object_id = %s
                 """).format(
-                    history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp"]),
+                    history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp", "deleted_from_object_url"]),
                     master_columns=sql.SQL(", ").join(sql.Identifier(col) for col in all_columns),
                 )
                 execute_query(conn, insert_history_query, (current_timestamp, digital_object_id))
