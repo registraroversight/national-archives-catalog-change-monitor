@@ -74,13 +74,13 @@ def main():
                 WHERE NOT EXISTS (
                     SELECT 1 FROM master_temp t WHERE t.temp_naid = master.naid
                 )
-                RETURNING *, %s AS h_history_timestamp
+                RETURNING *, %s AS h_history_timestamp, TRUE AS h_deleted_from_master
             )
             INSERT INTO master_history ({history_columns})
-            SELECT {master_columns}, h_history_timestamp
+            SELECT {master_columns}, h_history_timestamp, h_deleted_from_master
             FROM moved_rows
         """).format(
-            history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp"]),
+            history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp", "deleted_from_master"]),
             master_columns=sql.SQL(", ").join(sql.Identifier(col) for col in all_columns),
         )
         execute_query(conn, insert_deleted_rows_query, (current_timestamp,))
@@ -109,13 +109,13 @@ def main():
             }
 
             if differences:
-                # Insert old row into master_history
+                # Insert old row into master_history with FALSE for h_deleted_from_master since it exists in both tables
                 insert_history_query = sql.SQL("""
                     INSERT INTO master_history ({history_columns})
-                    SELECT {master_columns}, %s AS h_history_timestamp
+                    SELECT {master_columns}, %s AS h_history_timestamp, FALSE AS h_deleted_from_master
                     FROM master WHERE naid = %s
                 """).format(
-                    history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp"]),
+                    history_columns=sql.SQL(", ").join(sql.Identifier(f"h_{col}") for col in all_columns + ["history_timestamp", "deleted_from_master"]),
                     master_columns=sql.SQL(", ").join(sql.Identifier(col) for col in all_columns),
                 )
                 execute_query(conn, insert_history_query, (current_timestamp, naid))
