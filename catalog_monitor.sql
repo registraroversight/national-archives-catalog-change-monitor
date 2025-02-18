@@ -84,7 +84,8 @@ CREATE TABLE public.master_history (
     h_general_notes character varying,
     h_crccrca_number character varying,
     h_scrape_timestamp timestamp without time zone NOT NULL,
-    h_history_timestamp timestamp without time zone NOT NULL
+    h_history_timestamp timestamp without time zone NOT NULL,
+    h_deleted_from_master boolean NOT NULL
 );
 
 
@@ -147,7 +148,8 @@ CREATE TABLE public.object_url_history (
     h_digital_object_url character varying NOT NULL,
     h_digital_object_id character varying NOT NULL,
     h_scrape_timestamp timestamp without time zone NOT NULL,
-    h_history_timestamp timestamp without time zone NOT NULL
+    h_history_timestamp timestamp without time zone NOT NULL,
+    h_deleted_from_object_url boolean NOT NULL
 );
 
 
